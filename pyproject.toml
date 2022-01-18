@@ -101,6 +101,8 @@ readme = "README.md"
 repository = "https://github.com/zhukovgreen/z-workflows"
 packages = [
     {include = "z_workflows", from = "src"},
+    {include = "app", from = "src"},
+    {include = "workflows"},
 ]
 keywords = ["bot", "calendar", "time", "management"]
 classifiers = [
@@ -120,12 +122,9 @@ z-workflows = "app.cli:main"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-loguru = "^0.5.3"
-dagster = "^0.13.12"
-dagit = "^0.13.12"
 environs = "^9.3.5"
 click = "^8.0.3"
-pexpect = "^4.8.0"
+attrs = "^21.4.0"
 
 [tool.poetry.dev-dependencies]
 coverage = {extras = ["toml"], version = "^6.1.2"}
