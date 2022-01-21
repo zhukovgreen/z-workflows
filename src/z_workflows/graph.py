@@ -77,15 +77,15 @@ class Edge:
     outs: Tuple[str, ...] = attrs.field()
 
     @fn.validator
-    def check_fn(self, attrib, fn):
+    def check_fn(self, _, fn):
         fn_sig = inspect.signature(ensure_coro_returns_tuple(fn))
         assert len(fn_sig.parameters) == len(self.ins), (
-            f"Mismatch in {fn.__name__} arguments number and ins definition "
-            f"{self.ins}"
+            f"Mismatch in {fn.__name__} arguments {fn_sig.parameters} "
+            f"and ins definition {self.ins}"
         )
         assert len(fn_sig.return_annotation) == len(self.outs), (
-            f"Mismatch in {fn.__name__} return args and outs definition "
-            f"{self.outs}"
+            f"Mismatch in {fn.__name__} return args {fn_sig.return_annotation}"
+            f" and outs definition {self.outs}"
         )
 
 
