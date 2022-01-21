@@ -68,4 +68,4 @@ repos:
   - id: mypy
     name: Lint code (mypy)
   repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v0.930
+  rev: v0.931

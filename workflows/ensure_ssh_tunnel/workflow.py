@@ -2,10 +2,9 @@ import asyncio
 import shlex
 
 import attrs
-import pytest
 
+from workflows.ops_collection import op_send_bell_to_terminal
 from z_workflows.bases import ConfigBase, WorkflowBase
-# TODO solve configs. Assuming
 from z_workflows.graph import Edge
 
 
@@ -35,7 +34,7 @@ async def op_trigger_ssh_tunnel_cmd():
 
 
 @attrs.define(slots=True, auto_attribs=True)
-class Workflow(WorkflowBase):
+class EnsureSSHTunnel(WorkflowBase):
     pass
 
 
@@ -50,18 +49,9 @@ async def ssh_tunnel_is_not_healthy() -> bool:
     return proc.returncode != 0
 
 
-w = Workflow(
-    ops={
+ssh_tunnel = EnsureSSHTunnel(
+    ops=(
         Edge(fn=op_trigger_ssh_tunnel_cmd, ins=(), outs=("_",)),
-    },
+        Edge(fn=op_send_bell_to_terminal, ins=(), outs=("__",)),
+    ),
 )
-
-
-@pytest.mark.asyncio
-async def test_basic():
-    w = Workflow(
-        ops={
-            Edge(fn=op_trigger_ssh_tunnel_cmd, ins=(), outs=("_",)),
-        },
-    )
-    await w.execute_on_sensor(ssh_tunnel_is_not_healthy)

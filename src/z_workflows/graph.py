@@ -1,13 +1,13 @@
 import asyncio
 import inspect
+import itertools
 import logging
 
 from functools import partial, wraps
 from itertools import chain
-from typing import Coroutine, Set, Tuple
+from typing import Coroutine, Dict, Set, Tuple
 
 import attrs
-import pytest
 
 
 logger = logging.getLogger(__name__)
@@ -16,13 +16,13 @@ logger = logging.getLogger(__name__)
 def ensure_coro_returns_tuple(coro):
     @wraps(coro)
     async def wrapper(*args, **kwargs):
-        logger.debug(f"    Starting execution of {coro.__name__}")
+        logger.debug(f"Starting execution of {coro.__name__}")
         match inspect.signature(coro).return_annotation:
             case tuple(_):
                 res = await coro(*args, **kwargs)
             case _:
                 res = (await coro(*args, **kwargs),)
-        logger.debug(f"    Finished execution of {coro.__name__}")
+        logger.debug(f"Finished execution of {coro.__name__}")
         return res
 
     assert inspect.iscoroutinefunction(
@@ -33,6 +33,41 @@ def ensure_coro_returns_tuple(coro):
         sig = sig.replace(return_annotation=(sig.return_annotation,))
         wrapper.__signature__ = sig
     return wrapper
+
+
+@attrs.define(auto_attribs=True, frozen=True)
+class Solution:
+    edges: Tuple["Edge", ...] = attrs.field()
+    known_nodes: Dict[str, asyncio.Future] = attrs.field(
+        init=False,
+        factory=dict,
+    )
+
+    def __attrs_post_init__(self):
+        for out_ in itertools.chain(*(edge.outs for edge in self.edges)):
+            assert (
+                out_ not in self.known_nodes
+            ), f"Duplicated out '{out_}' definition found in multiple edges"
+            self.known_nodes.update({out_: asyncio.Future()})
+
+    async def calculate_edge(self, edge: "Edge"):
+        fn_args = await asyncio.gather(
+            *(self.known_nodes[in_] for in_ in edge.ins)
+        )
+        results = dict(
+            zip(
+                edge.outs,
+                await partial(edge.fn, *fn_args)(),
+            )
+        )
+        for key, result in results.items():
+            self.known_nodes[key].set_result(result)
+        return results
+
+    async def find(self):
+        return await asyncio.gather(
+            *(self.calculate_edge(edge) for edge in self.edges)
+        )
 
 
 @attrs.define(auto_attribs=True, frozen=True)
@@ -55,14 +90,14 @@ class Edge:
 
 
 _Graph = set[Edge, ...]
-Solution = Tuple[Set[Edge], ...]
+_Solution = Tuple[Set[Edge], ...]
 
 
-def resolve(graph: _Graph) -> Solution:
+def resolve(graph: _Graph):
     def inner(
         known_nodes: Tuple[str, ...],
         edges_to_resolve: _Graph,
-        result: Solution,
+        result: _Solution,
         epoch: int,
     ):
         logger.debug(
@@ -98,85 +133,4 @@ def resolve(graph: _Graph) -> Solution:
                 epoch + 1,
             )
 
-    return inner((), graph, (), 1)
-
-
-async def execute(solution: Solution) -> dict:
-    async def inner(args_registry, group, epoch, groups_to_resolve) -> dict:
-        await asyncio.sleep(0)
-        logger.debug(f"Executing epoch: {epoch}")
-        results = await asyncio.gather(
-            *(
-                partial(
-                    edge.fn,
-                    *(args_registry.get(node) for node in edge.ins),
-                )()
-                for edge in group
-            )
-        )
-        for keys, values in zip((edge.outs for edge in group), results):
-            assert not any(key in args_registry for key in keys), (
-                f"Duplicated out key found in the group. "
-                f"Already known keys: {args_registry}\n"
-                f"Keys trying to add: {dict(zip(keys, values))}"
-            )
-            args_registry.update(zip(keys, values))
-        if not groups_to_resolve:
-            return args_registry
-        return await inner(
-            args_registry,
-            groups_to_resolve[0],
-            epoch + 1,
-            groups_to_resolve[1:],
-        )
-
-    if not solution:
-        return {}
-    return await inner(
-        {},
-        solution[0],
-        1,
-        solution[1:],
-    )
-
-
-@pytest.mark.asyncio
-async def test_graph():
-    async def some_op1(a: int, b: int) -> int:
-        await asyncio.sleep(0.5)
-        return a + b
-
-    async def some_op2() -> (int, str):
-        await asyncio.sleep(1)
-        return 1, "not_used"
-
-    async def some_op3() -> int:
-        await asyncio.sleep(0.5)
-        return 2
-
-    async def some_op4(a: int, b: int) -> int:
-        await asyncio.sleep(0.5)
-        return a + b
-
-    async def some_op5(a: int, b: int) -> int:
-        await asyncio.sleep(0.5)
-        return a + b
-
-    some_graph = {
-        Edge(some_op1, ins=("a", "b"), outs=("c",)),
-        Edge(some_op2, ins=(), outs=("a", "not_used")),
-        Edge(some_op3, ins=(), outs=("b",)),
-        Edge(some_op4, ins=("a", "c"), outs=("d",)),
-        Edge(some_op5, ins=("a", "a"), outs=("h",)),
-    }
-    actual = await execute(resolve(some_graph))
-    expected = {
-        "a": 1,
-        "b": 2,
-        "c": 3,
-        "d": 4,
-        "h": 2,
-        "not_used": "not_used",
-    }
-
-    assert actual == expected
+    inner((), graph, (), 1)

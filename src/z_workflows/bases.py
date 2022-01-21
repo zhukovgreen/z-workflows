@@ -3,21 +3,11 @@ import asyncio
 import inspect
 import logging
 
-from typing import (
-    Any,
-    Callable,
-    ClassVar,
-    Coroutine,
-    Dict,
-    Set,
-    Tuple,
-    TypeVar,
-)
+from typing import Any, Callable, ClassVar, Coroutine, Dict, Tuple, TypeVar
 
 import attrs
 
 from z_workflows import graph
-from z_workflows.graph import Solution
 
 
 logger = logging.getLogger(__name__)
@@ -33,21 +23,17 @@ _Sensor = Callable[[], Coroutine[Any, Any, bool]]
 @attrs.define(auto_attribs=True)
 class WorkflowBase(metaclass=abc.ABCMeta):
     registry: ClassVar[Dict[_WorkflowName, "_Workflow"]] = {}
-    ops: Set[graph.Edge] = attrs.field()
-    solution: Solution = attrs.field(init=False)
+    ops: Tuple[graph.Edge, ...] = attrs.field()
 
-    def __attrs_post_init__(self):
-        self.solution = graph.resolve(self.ops)
-
-    def __init_subclass__(cls, **kwargs):
-        cls.registry[cls.__name__] = cls
-        super().__init_subclass__(**kwargs)
+    @ops.validator
+    def check_ops(self, _, ops):
+        graph.resolve(set(ops))
 
     async def execute(self) -> dict:
         logger.info(f"Executing workflow {self.__class__.__name__}")
-        res = await graph.execute(self.solution)
+        results = await graph.Solution(edges=self.ops).find()
         logger.info(f"Workflow {self.__class__.__name__} finished")
-        return res
+        return results
 
     async def execute_on_sensor(self, sensor: _Sensor) -> dict:
         await sense(self.execute, sensor)

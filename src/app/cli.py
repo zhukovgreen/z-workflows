@@ -9,8 +9,11 @@ import click
 from environs import Env
 
 from app.logger import setup_logger
-from workflows.ensure_ssh_tunnel.workflow import ssh_tunnel_is_not_healthy, w
-from z_workflows.bases import WorkflowBase
+from workflows.check_binks1_hdfs.workflow import hdfs_path_exists, hdfs_watch
+from workflows.ensure_ssh_tunnel.workflow import (
+    ssh_tunnel,
+    ssh_tunnel_is_not_healthy,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -47,7 +50,16 @@ class Application:
 
     async def start(self):
         logger.info("Starting workflows execution.")
-        await w.execute_on_sensor(ssh_tunnel_is_not_healthy)
+        t1 = asyncio.create_task(
+            ssh_tunnel.execute_on_sensor(ssh_tunnel_is_not_healthy),
+        )
+        # t2 = asyncio.create_task(
+        #     hdfs_watch.execute_on_sensor(hdfs_path_exists),
+        # )
+        await asyncio.gather(
+            t1,
+            # t2,
+        )
 
     async def shutdown(self):
         logger.info("Shutdown the application started.")
