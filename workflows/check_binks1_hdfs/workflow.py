@@ -3,9 +3,9 @@ import shlex
 
 import attrs
 
-from workflows.ops_collection import op_send_bell_to_terminal
 from z_workflows.bases import ConfigBase, WorkflowBase
 from z_workflows.graph import Edge
+from z_workflows.ops_collection import op_send_bell_to_terminal
 
 
 @attrs.define(slots=True, frozen=True, auto_attribs=True)
@@ -15,6 +15,7 @@ class C(ConfigBase):
 
 
 c = C(
+    "entrypoint",
     "binks1",
     "/bigdatahdfs/datalake/publish/"
     "rwds/Membership/enceladus_info_date=2022-01-19",

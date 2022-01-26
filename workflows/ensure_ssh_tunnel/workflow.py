@@ -3,9 +3,9 @@ import shlex
 
 import attrs
 
-from workflows.ops_collection import op_send_bell_to_terminal
 from z_workflows.bases import ConfigBase, WorkflowBase
 from z_workflows.graph import Edge
+from z_workflows.ops_collection import op_send_bell_to_terminal
 
 
 @attrs.define(slots=True, frozen=True, auto_attribs=True)
@@ -16,9 +16,10 @@ class C(ConfigBase):
 
 
 c = C(
-    "127.0.0.1:8888",
-    "mail",
-    "zhukovgreen.pro",
+    WORKFLOW_ENTRYPOINT="entrypoint",
+    SOCKS5_HOSTNAME="127.0.0.1:8888",
+    SSH_DEST_SERVER="mail",
+    URL="zhukovgreen.pro",
 )
 
 
@@ -38,7 +39,7 @@ class EnsureSSHTunnel(WorkflowBase):
     pass
 
 
-async def ssh_tunnel_is_not_healthy() -> bool:
+async def sensor_ssh_tunnel_is_not_healthy() -> bool:
     cmd = (
         f"curl --socks5-hostname "
         f"{shlex.quote(c.SOCKS5_HOSTNAME)} "

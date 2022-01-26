@@ -25,6 +25,7 @@ class WorkflowBase(metaclass=abc.ABCMeta):
     registry: ClassVar[Dict[_WorkflowName, "_Workflow"]] = {}
     ops: Tuple[graph.Edge, ...] = attrs.field()
 
+
     @ops.validator
     def check_ops(self, _, ops):
         graph.resolve(set(ops))
@@ -39,16 +40,19 @@ class WorkflowBase(metaclass=abc.ABCMeta):
         await sense(self.execute, sensor)
 
 
-@attrs.define(auto_attribs=True)
+@attrs.define(auto_attribs=True, frozen=True)
 class ConfigBase(metaclass=abc.ABCMeta):
-    ...
+    WORKFLOW_ENTRYPOINT: str = attrs.field()
 
 
 _Workflow = TypeVar("_Workflow", bound=WorkflowBase)
 _Config = TypeVar("_Config", bound=ConfigBase)
 
 
-async def sense(coro: Callable[[], Coroutine], sensor: _Sensor) -> None:
+async def sense(
+    coro: Callable[[], Coroutine],
+    sensor: _Sensor,
+) -> None:
     while True:
         logger.debug(f"Checking sensor {sensor.__name__}")
         if await sensor() is True:
