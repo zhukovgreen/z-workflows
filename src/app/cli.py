@@ -1,6 +1,8 @@
 import asyncio
 import importlib
 import logging
+import pkgutil
+import sys
 
 from functools import wraps
 from pathlib import Path
@@ -11,19 +13,31 @@ import click
 
 from click import Context
 from environs import Env
-from setuptools import find_packages
 
 from app.logger import setup_logger
-from z_workflows.bases import ConfigBase
+from z_workflows.bases import ConfigBase, WorkflowBase, _Workflow
 
 
 _APP_KEY = "app"
 _ENV_KEY = "env"
+_WORKFLOWS_DIR_NAME = "workflows"
 REPO_ROOT = Path(__file__).parents[2]
 
 _Config = TypeVar("_Config", bound=ConfigBase)
 
 logger = logging.getLogger(__name__)
+
+
+def load_workflows() -> None:
+    def inner(package: str) -> None:
+        package = importlib.import_module(package)
+        for _, name, is_pkg in pkgutil.walk_packages(package.__path__):
+            full_name = package.__name__ + "." + name
+            importlib.import_module(full_name)
+            if is_pkg:
+                inner(full_name)
+
+    inner(_WORKFLOWS_DIR_NAME)
 
 
 def get_app(ctx) -> "Application":
@@ -61,7 +75,6 @@ verbose_option = click.option(
 @verbose_option
 @coro
 async def main(ctx: Context) -> None:
-    # setup_logger("INFO")
     env = Env(expand_vars=True)
     env.read_env()
 
@@ -94,7 +107,10 @@ async def run(
 ):
     app = get_app(ctx)
     try:
-        await app.start(workflows_=workflow_name or app.available_workflows)
+        await app.start(
+            workflows_=workflow_name
+            or tuple(w.__class__.__name__ for w in app.available_workflows)
+        )
     finally:
         await app.shutdown()
 
@@ -105,33 +121,40 @@ async def run(
 @coro
 async def ls(ctx):
     for item in get_app(ctx).available_workflows:
-        click.echo(item)
+        click.echo(item.__class__.__name__)
 
 
 @attrs.define(auto_attribs=True, slots=True)
 class Application:
     env: Env = attrs.field()
-    available_workflows: Tuple[str, ...] = attrs.field(init=False)
+    available_workflows: Tuple[_Workflow, ...] = attrs.field(init=False)
 
     def discover_workflows(self):
         logger.debug("Workflows discovering started.")
-        self.available_workflows = tuple(
-            find_packages(str(REPO_ROOT / "workflows"))
-        )
+        load_workflows()
+        self.available_workflows = tuple(WorkflowBase.instances)
 
     async def start(self, workflows_: Tuple[str, ...]):
         logger.info("Starting workflows execution.")
-        assert all(w in self.available_workflows for w in workflows_), (
-            "Found unknown workflow name. See list of available workflows:"
-            "\nz-workflows ls"
+        available_workflows_names = tuple(
+            w.__class__.__name__ for w in self.available_workflows
+        )
+        assert all(w in available_workflows_names for w in workflows_), (
+            "Found unknown workflow name. See list of available workflows:\n"
+            "`z-workflows ls`"
         )
 
-        def get_entrypoint(workflow: str) -> Coroutine:
-            w = importlib.import_module(f".{workflow}", "workflows")
-            config: _Config = getattr(w, "config")
-            return getattr(w, config.WORKFLOW_ENTRYPOINT)
-
-        await asyncio.gather(*(map(get_entrypoint, workflows_)))
+        workflows_to_run = filter(
+            lambda w: w.__class__.__name__ in workflows_,
+            self.available_workflows,
+        )
+        await asyncio.gather(
+            *map(
+                lambda w: w.execute_on_sensor(),
+                workflows_to_run,
+            )
+        )
 
     async def shutdown(self):
         logger.info("Shutdown the application started.")
+        # TODO resources cleaning

@@ -8,7 +8,7 @@ from z_workflows.graph import Edge
 from z_workflows.ops_collection import op_send_bell_to_terminal
 
 
-@attrs.define(slots=True, frozen=True, auto_attribs=True)
+@attrs.define(auto_attribs=True, frozen=True, slots=True)
 class C(ConfigBase):
     SOCKS5_HOSTNAME: str = attrs.field()
     SSH_DEST_SERVER: str = attrs.field()
@@ -34,7 +34,7 @@ async def op_trigger_ssh_tunnel_cmd():
     await proc.communicate()
 
 
-@attrs.define(slots=True, auto_attribs=True)
+@attrs.define(auto_attribs=True, frozen=True, slots=True)
 class EnsureSSHTunnel(WorkflowBase):
     pass
 
@@ -55,4 +55,6 @@ ssh_tunnel = EnsureSSHTunnel(
         Edge(fn=op_trigger_ssh_tunnel_cmd, ins=(), outs=("_",)),
         Edge(fn=op_send_bell_to_terminal, ins=(), outs=("__",)),
     ),
+    sensor=sensor_ssh_tunnel_is_not_healthy,
+    config=c,
 )

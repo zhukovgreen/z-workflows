@@ -35,7 +35,7 @@ def ensure_coro_returns_tuple(coro):
     return wrapper
 
 
-@attrs.define(auto_attribs=True, frozen=True)
+@attrs.define(auto_attribs=True, frozen=True, slots=True)
 class Solution:
     edges: Tuple["Edge", ...] = attrs.field()
     known_nodes: Dict[str, asyncio.Future] = attrs.field(
@@ -70,7 +70,7 @@ class Solution:
         )
 
 
-@attrs.define(auto_attribs=True, frozen=True)
+@attrs.define(auto_attribs=True, frozen=True, slots=True)
 class Edge:
     fn: Coroutine = attrs.field(converter=ensure_coro_returns_tuple)
     ins: Tuple[str, ...] = attrs.field()

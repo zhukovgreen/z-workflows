@@ -7,7 +7,7 @@ from z_workflows.bases import ConfigBase, WorkflowBase
 from z_workflows.graph import Edge
 
 
-@attrs.define(slots=True, frozen=True, auto_attribs=True)
+@attrs.define(auto_attribs=True, frozen=True, slots=True)
 class C(ConfigBase):
     SOME_KEY: str = attrs.field()
 
@@ -43,7 +43,7 @@ async def some_op5(a: int, b: int) -> int:
     return a + b
 
 
-@attrs.define(slots=True, auto_attribs=True)
+@attrs.define(auto_attribs=True, frozen=True, slots=True)
 class ExampleWorkflow(WorkflowBase):
     pass
 
@@ -62,5 +62,7 @@ example_workflow = ExampleWorkflow(
         Edge(some_op3, ins=(), outs=("b",)),
         Edge(some_op4, ins=("a", "c"), outs=("d",)),
         Edge(some_op5, ins=("a", "a"), outs=("e",)),
-    )
+    ),
+    sensor=sensor_example,
+    config=c,
 )

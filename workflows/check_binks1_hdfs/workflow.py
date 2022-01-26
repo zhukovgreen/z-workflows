@@ -8,7 +8,7 @@ from z_workflows.graph import Edge
 from z_workflows.ops_collection import op_send_bell_to_terminal
 
 
-@attrs.define(slots=True, frozen=True, auto_attribs=True)
+@attrs.define(auto_attribs=True, frozen=True, slots=True)
 class C(ConfigBase):
     SSH_DEST_SERVER: str = attrs.field()
     HDFS_PATH: str = attrs.field()
@@ -22,7 +22,7 @@ c = C(
 )
 
 
-@attrs.define(slots=True, auto_attribs=True)
+@attrs.define(auto_attribs=True, frozen=True, slots=True)
 class WatchHDFSonBinks1(WorkflowBase):
     pass
 
@@ -39,4 +39,6 @@ async def hdfs_path_exists() -> bool:
 
 hdfs_watch = WatchHDFSonBinks1(
     ops=(Edge(fn=op_send_bell_to_terminal, ins=(), outs=("_",)),),
+    sensor=hdfs_path_exists,
+    config=c,
 )
