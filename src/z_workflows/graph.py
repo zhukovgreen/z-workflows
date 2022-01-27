@@ -5,23 +5,25 @@ import logging
 
 from functools import partial, wraps
 from itertools import chain
-from typing import Coroutine, Dict, Set, Tuple
+from typing import Any, Callable, Coroutine, Dict, Set, Tuple
 
 import attrs
 
 
 logger = logging.getLogger(__name__)
+_ASYNC_CALLABLE = Callable[[], Coroutine[Any, Any, Any]]
 
 
-def ensure_coro_returns_tuple(coro):
+def ensure_coro_returns_tuple(coro: _ASYNC_CALLABLE) -> _ASYNC_CALLABLE:
     @wraps(coro)
-    async def wrapper(*args, **kwargs):
+    async def wrapper(*args: Any, **kwargs: Any) -> Any:
         logger.debug(f"Starting execution of {coro.__name__}")
-        match inspect.signature(coro).return_annotation:
-            case tuple(_):
-                res = await coro(*args, **kwargs)
-            case _:
-                res = (await coro(*args, **kwargs),)
+        coroutine = coro(*args, **kwargs)
+        res = (
+            await coroutine
+            if isinstance(inspect.signature(coro).return_annotation, tuple)
+            else (await coroutine,)
+        )
         logger.debug(f"Finished execution of {coro.__name__}")
         return res
 
@@ -43,14 +45,14 @@ class Solution:
         factory=dict,
     )
 
-    def __attrs_post_init__(self):
+    def __attrs_post_init__(self) -> None:
         for out_ in itertools.chain(*(edge.outs for edge in self.edges)):
             assert (
                 out_ not in self.known_nodes
             ), f"Duplicated out '{out_}' definition found in multiple edges"
             self.known_nodes.update({out_: asyncio.Future()})
 
-    async def calculate_edge(self, edge: "Edge"):
+    async def calculate_edge(self, edge: "Edge") -> Dict[str, Any]:
         fn_args = await asyncio.gather(
             *(self.known_nodes[in_] for in_ in edge.ins)
         )
@@ -64,7 +66,7 @@ class Solution:
             self.known_nodes[key].set_result(result)
         return results
 
-    async def find(self):
+    async def find(self) -> Any:
         return await asyncio.gather(
             *(self.calculate_edge(edge) for edge in self.edges)
         )
@@ -72,12 +74,12 @@ class Solution:
 
 @attrs.define(auto_attribs=True, frozen=True, slots=True)
 class Edge:
-    fn: Coroutine = attrs.field(converter=ensure_coro_returns_tuple)
+    fn: _ASYNC_CALLABLE = attrs.field(converter=ensure_coro_returns_tuple)
     ins: Tuple[str, ...] = attrs.field()
     outs: Tuple[str, ...] = attrs.field()
 
     @fn.validator
-    def check_fn(self, _, fn):
+    def check_fn(self, _, fn: _ASYNC_CALLABLE) -> None:
         fn_sig = inspect.signature(ensure_coro_returns_tuple(fn))
         assert len(fn_sig.parameters) == len(self.ins), (
             f"Mismatch in {fn.__name__} arguments {fn_sig.parameters} "
@@ -89,17 +91,17 @@ class Edge:
         )
 
 
-_Graph = set[Edge, ...]
+_Graph = Set[Edge]
 _Solution = Tuple[Set[Edge], ...]
 
 
-def resolve(graph: _Graph):
+def resolve(graph: _Graph) -> None:
     def inner(
         known_nodes: Tuple[str, ...],
         edges_to_resolve: _Graph,
         result: _Solution,
         epoch: int,
-    ):
+    ) -> _Solution:
         logger.debug(
             f"""
             Epoch {epoch}:

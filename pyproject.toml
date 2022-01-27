@@ -2,6 +2,9 @@
 line-length=79
 target-version=["py310"]
 
+[tool.bandit]
+skips=["B101"]
+
 [tool.isort]
 atomic=true
 line_length = 79
@@ -48,8 +51,9 @@ disallow_untyped_defs = true
 follow_imports = "normal"
 follow_imports_for_stubs = true
 ignore_missing_imports = false
-mypy_path = "./src/"
+mypy_path = "./src"
 namespace_packages = true
+explicit_package_bases = true
 show_column_numbers = true
 show_error_codes = true
 warn_redundant_casts = true
@@ -73,22 +77,6 @@ log_cli = true
 log_cli_level = "DEBUG"
 log_cli_format = "| %(asctime)s | %(name)s | %(levelname)s | %(filename)s | %(message)s"
 
-[tool.interrogate]
-ignore-init-method = true
-ignore-init-module = true
-ignore-magic = false
-ignore-semiprivate = false
-ignore-private = false
-ignore-property-decorators = false
-ignore-module = true
-fail-under = 100
-exclude = ["setup.py", "docs", "build",]
-ignore-regex = ["^get$", "^mock_.*", ".*BaseClass.*", "^get.*$", "^factory$", "^is_.*$"]
-verbose = 2
-quiet = false
-whitelist-regex = []
-color = true
-
 [tool.poetry]
 name = "z-workflows"
 version = "1.0"
@@ -101,8 +89,11 @@ readme = "README.md"
 repository = "https://github.com/zhukovgreen/z-workflows"
 packages = [
     {include = "z_workflows", from = "src"},
+    {include = "z_workflows/py.typed", from = "src"},
     {include = "app", from = "src"},
+    {include = "app/py.typed", from = "src"},
     {include = "workflows"},
+    {include = "workflows/py.typed"},
 ]
 keywords = ["bot", "calendar", "time", "management"]
 classifiers = [
@@ -131,9 +122,9 @@ coverage = {extras = ["toml"], version = "^6.1.2"}
 neovim = "^0.3.1"
 pdbpp = "^0.10.3"
 pytest = "^6.2.5"
-pytest-asyncio = "^0.16.0"
+pytest-asyncio = "^0.17.2"
 pytest-cov = "^3.0.0"
-mypy = "^0.910"
+mypy = "^0.931"
 black = "^21.12b0"
 pre-commit = "^2.16.0"
 isort = "^5.10.1"

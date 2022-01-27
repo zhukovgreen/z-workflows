@@ -2,7 +2,7 @@ import logging
 import sys
 
 
-def setup_logger(level: str = "INFO"):
+def setup_logger(level: str = "INFO") -> None:
     logging.basicConfig(
         level=level,
         stream=sys.stderr,

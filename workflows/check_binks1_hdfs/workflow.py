@@ -15,7 +15,6 @@ class C(ConfigBase):
 
 
 c = C(
-    "entrypoint",
     "binks1",
     "/bigdatahdfs/datalake/publish/"
     "rwds/Membership/enceladus_info_date=2022-01-19",

@@ -13,7 +13,6 @@ class C(ConfigBase):
 
 
 c = C(
-    WORKFLOW_ENTRYPOINT="entrypoint",
     SOME_KEY="some key",
 )
 

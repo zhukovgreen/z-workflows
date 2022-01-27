@@ -3,16 +3,7 @@ import asyncio
 import inspect
 import logging
 
-from typing import (
-    Any,
-    Callable,
-    ClassVar,
-    Coroutine,
-    Dict,
-    List,
-    Tuple,
-    TypeVar,
-)
+from typing import Any, Callable, ClassVar, Coroutine, List, Tuple, TypeVar
 
 import attrs
 
@@ -66,7 +57,7 @@ class WorkflowBase:
 
 @attrs.define(auto_attribs=True, frozen=True, slots=True)
 class ConfigBase(metaclass=abc.ABCMeta):
-    WORKFLOW_ENTRYPOINT: str = attrs.field()
+    ...
 
 
 _Workflow = TypeVar("_Workflow", bound=WorkflowBase)

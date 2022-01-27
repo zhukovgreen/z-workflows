@@ -16,7 +16,6 @@ class C(ConfigBase):
 
 
 c = C(
-    WORKFLOW_ENTRYPOINT="entrypoint",
     SOCKS5_HOSTNAME="127.0.0.1:8888",
     SSH_DEST_SERVER="mail",
     URL="zhukovgreen.pro",
