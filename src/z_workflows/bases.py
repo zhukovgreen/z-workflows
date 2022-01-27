@@ -10,6 +10,7 @@ from z_workflows import graph
 
 
 SENSOR_CHECK_INTERVAL = 5
+WORKFLOW_TIMEOUT = 10
 
 logger = logging.getLogger(__name__)
 
@@ -40,8 +41,15 @@ class WorkflowBase:
             logger.info(f"Checking sensor {self.sensor.__name__}")
             if await self.sensor() is True:
                 logger.info(f"Executing workflow {self.__class__.__name__}")
-                task = asyncio.create_task(self.execute())
-                await task
+                workflow = asyncio.create_task(self.execute())
+                try:
+                    await asyncio.wait_for(workflow, timeout=WORKFLOW_TIMEOUT)
+                except asyncio.TimeoutError:
+                    logger.warning(
+                        f"Workflow {self.__class__.__name__} was cancelled "
+                        f"after {WORKFLOW_TIMEOUT}s."
+                    )
+                    break
             else:
                 logger.info(
                     f"Skipping task execution for {self.__class__.__name__} "
