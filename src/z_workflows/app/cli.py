@@ -13,7 +13,7 @@ import click
 from click import Context
 from environs import Env
 
-from app.logger import setup_logger
+from z_workflows.app.logger import setup_logger
 from z_workflows.bases import ConfigBase, WorkflowBase, _Workflow
 
 

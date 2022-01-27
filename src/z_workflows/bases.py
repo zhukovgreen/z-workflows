@@ -42,13 +42,13 @@ class WorkflowBase:
 
     async def execute_on_sensor(self) -> None:
         while True:
-            logger.debug(f"Checking sensor {self.sensor.__name__}")
+            logger.info(f"Checking sensor {self.sensor.__name__}")
             if await self.sensor() is True:
                 logger.info(f"Executing workflow {self.__class__.__name__}")
                 task = asyncio.create_task(self.execute())
                 await task
             else:
-                logger.debug(
+                logger.info(
                     f"Skipping task execution for {self.__class__.__name__} "
                     f"and wait..."
                 )

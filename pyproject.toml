@@ -26,7 +26,6 @@ known_first_party=[
 branch = false
 source = ["z_workflows"]
 omit = [
-    "src/z_workflows/__main__.py"
 ]
 
 [tool.coverage.paths]
@@ -90,8 +89,6 @@ repository = "https://github.com/zhukovgreen/z-workflows"
 packages = [
     {include = "z_workflows", from = "src"},
     {include = "z_workflows/py.typed", from = "src"},
-    {include = "app", from = "src"},
-    {include = "app/py.typed", from = "src"},
     {include = "workflows"},
     {include = "workflows/py.typed"},
 ]
@@ -109,7 +106,7 @@ classifiers = [
   "Typing :: Typed"
 ]
 [tool.poetry.scripts]
-z-workflows = "app.cli:main"
+z-workflows = "z_workflows.app.cli:main"
 
 [tool.poetry.dependencies]
 python = "^3.10"

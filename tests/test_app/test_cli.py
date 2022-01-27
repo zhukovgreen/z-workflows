@@ -1,6 +1,6 @@
 from click.testing import CliRunner
 
-from app.cli import main
+from z_workflows.app.cli import main
 
 
 def test_run_basic(monkeypatch):
