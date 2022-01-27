@@ -11,7 +11,6 @@ import attrs
 import click
 
 from click import Context
-from environs import Env
 
 from z_workflows.app.logger import setup_logger
 from z_workflows.bases import ConfigBase, WorkflowBase, _Workflow
@@ -23,6 +22,12 @@ _WORKFLOWS_DIR_NAME = "workflows"
 REPO_ROOT = Path(__file__).parents[2]
 
 _Config = TypeVar("_Config", bound=ConfigBase)
+
+
+CONTEXT_SETTINGS = {
+    "help_option_names": ["-h", "--help"],
+    "auto_envvar_prefix": "ZW",
+}
 
 logger = logging.getLogger(__name__)
 
@@ -41,10 +46,6 @@ def load_workflows() -> None:
 
 def get_app(ctx) -> "Application":
     return ctx.obj[_APP_KEY]
-
-
-def get_env(ctx) -> Env:
-    return ctx.obj[_ENV_KEY]
 
 
 def coro(f):
@@ -69,20 +70,16 @@ verbose_option = click.option(
 )
 
 
-@click.group()
+@click.group(context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @verbose_option
 @coro
 async def main(ctx: Context) -> None:
-    env = Env(expand_vars=True)
-    env.read_env()
-
     ctx.ensure_object(dict)
-    app = Application(env)
+    app = Application()
     app.discover_workflows()
 
     ctx.obj[_APP_KEY] = app
-    ctx.obj[_ENV_KEY] = env
 
 
 @main.command(help="Run given workflow(s)")
@@ -125,7 +122,6 @@ async def ls(ctx):
 
 @attrs.define(auto_attribs=True, slots=True)
 class Application:
-    env: Env = attrs.field()
     available_workflows: Tuple[_Workflow, ...] = attrs.field(init=False)
 
     def discover_workflows(self):

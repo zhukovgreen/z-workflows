@@ -110,7 +110,6 @@ z-workflows = "z_workflows.app.cli:main"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-environs = "^9.3.5"
 click = "^8.0.3"
 attrs = "^21.4.0"
 
