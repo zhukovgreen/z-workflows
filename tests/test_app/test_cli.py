@@ -11,6 +11,7 @@ def test_run_basic(monkeypatch):
             "run",
             "--workflow-name",
             "ExampleWorkflow",
+            "-v",
         ],
         catch_exceptions=False,
     )

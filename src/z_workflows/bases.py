@@ -1,6 +1,5 @@
 import abc
 import asyncio
-import inspect
 import logging
 
 from typing import Any, Callable, ClassVar, Coroutine, List, Tuple, TypeVar
@@ -10,13 +9,9 @@ import attrs
 from z_workflows import graph
 
 
-logger = logging.getLogger(__name__)
+SENSOR_CHECK_INTERVAL = 5
 
-_FnName = str
-_FnSignature = inspect.Signature
-_FnOutsNames = Tuple[str, ...]
-_Op = Coroutine
-_Sensor = Callable[[], Coroutine[Any, Any, bool]]
+logger = logging.getLogger(__name__)
 
 
 @attrs.define(auto_attribs=True, frozen=True, slots=True)
@@ -24,7 +19,7 @@ class WorkflowBase:
     instances: ClassVar[List["_Workflow"]] = []
 
     ops: Tuple[graph.Edge, ...] = attrs.field()
-    sensor: _Sensor = attrs.field()
+    sensor: "_Sensor" = attrs.field()
     config: "_Config" = attrs.field()
 
     def __attrs_post_init__(self):
@@ -52,7 +47,7 @@ class WorkflowBase:
                     f"Skipping task execution for {self.__class__.__name__} "
                     f"and wait..."
                 )
-            await asyncio.sleep(5)
+            await asyncio.sleep(SENSOR_CHECK_INTERVAL)
 
 
 @attrs.define(auto_attribs=True, frozen=True, slots=True)
@@ -60,5 +55,6 @@ class ConfigBase(metaclass=abc.ABCMeta):
     ...
 
 
+_Sensor = Callable[[], Coroutine[Any, Any, bool]]
 _Workflow = TypeVar("_Workflow", bound=WorkflowBase)
 _Config = TypeVar("_Config", bound=ConfigBase)
