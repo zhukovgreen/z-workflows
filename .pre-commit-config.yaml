@@ -7,7 +7,7 @@ repos:
     id: black
     name: Format code (black)
   repo: https://github.com/psf/black
-  rev: 21.12b0
+  rev: 22.1.0
 - hooks:
   - additional_dependencies:
     - black==21.12b0
@@ -18,7 +18,7 @@ repos:
     language_version: python3
     name: Format docs (blacken-docs)
   repo: https://github.com/asottile/blacken-docs
-  rev: v1.12.0
+  rev: v1.12.1
 - hooks:
   - additional_dependencies:
     - toml

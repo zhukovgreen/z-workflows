@@ -112,6 +112,8 @@ z-workflows = "z_workflows.app.cli:main"
 python = "^3.10"
 click = "^8.0.3"
 attrs = "^21.4.0"
+structlog = "^21.5.0"
+rich = "^11.1.0"
 
 [tool.poetry.dev-dependencies]
 coverage = {extras = ["toml"], version = "^6.1.2"}
@@ -121,7 +123,7 @@ pytest = "^6.2.5"
 pytest-asyncio = "^0.17.2"
 pytest-cov = "^3.0.0"
 mypy = "^0.931"
-black = "^21.12b0"
+black = "^22.1.0"
 pre-commit = "^2.16.0"
 isort = "^5.10.1"
 

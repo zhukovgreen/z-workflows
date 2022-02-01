@@ -1,10 +1,10 @@
 import abc
 import asyncio
-import logging
 
 from typing import Any, Callable, ClassVar, Coroutine, List, Tuple, TypeVar
 
 import attrs
+import structlog
 
 from z_workflows import graph
 
@@ -12,7 +12,7 @@ from z_workflows import graph
 SENSOR_CHECK_INTERVAL = 5
 WORKFLOW_TIMEOUT = 10
 
-logger = logging.getLogger(__name__)
+logger = structlog.getLogger()
 
 
 @attrs.define(auto_attribs=True, frozen=True, slots=True)

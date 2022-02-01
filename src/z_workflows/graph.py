@@ -1,16 +1,16 @@
 import asyncio
 import inspect
 import itertools
-import logging
 
 from functools import partial, wraps
 from itertools import chain
 from typing import Any, Callable, Coroutine, Dict, Set, Tuple
 
 import attrs
+import structlog
 
 
-logger = logging.getLogger(__name__)
+logger = structlog.getLogger()
 _ASYNC_CALLABLE = Callable[[], Coroutine[Any, Any, Any]]
 
 

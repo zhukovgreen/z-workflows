@@ -1,6 +1,5 @@
 import asyncio
 import importlib
-import logging
 import pkgutil
 
 from functools import wraps
@@ -9,6 +8,7 @@ from typing import Tuple, TypeVar
 
 import attrs
 import click
+import structlog
 
 from click import Context
 
@@ -23,13 +23,12 @@ REPO_ROOT = Path(__file__).parents[2]
 
 _Config = TypeVar("_Config", bound=ConfigBase)
 
-
 CONTEXT_SETTINGS = {
     "help_option_names": ["-h", "--help"],
     "auto_envvar_prefix": "ZW",
 }
 
-logger = logging.getLogger(__name__)
+logger = structlog.getLogger()
 
 
 def load_workflows() -> None:
