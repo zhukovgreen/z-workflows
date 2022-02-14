@@ -9,6 +9,8 @@ from typing import Any, Callable, Coroutine, Dict, Set, Tuple
 import attrs
 import structlog
 
+from structlog.contextvars import clear_contextvars
+
 
 logger = structlog.getLogger()
 _ASYNC_CALLABLE = Callable[[], Coroutine[Any, Any, Any]]
@@ -103,12 +105,11 @@ def resolve(graph: _Graph) -> None:
         epoch: int,
     ) -> _Solution:
         logger.debug(
-            f"""
-            Epoch {epoch}:
-            Known nodes: {known_nodes}
-            Not resolved: {edges_to_resolve}
-            Already resolved: {result}
-            """
+            "Resolving edges of a graph",
+            epoch=epoch,
+            known_nodes=known_nodes,
+            not_resolved_edges=edges_to_resolve,
+            resolved_edges=result,
         )
         if not edges_to_resolve:
             return result

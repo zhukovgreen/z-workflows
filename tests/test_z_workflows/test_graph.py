@@ -1,11 +1,8 @@
 import asyncio
 
-import pytest
-
 from z_workflows.graph import Edge, Solution, resolve
 
 
-@pytest.mark.asyncio
 async def test_graph():
     async def some_op1(a: int, b: int) -> int:
         await asyncio.sleep(0.5)

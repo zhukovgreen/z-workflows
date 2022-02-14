@@ -43,7 +43,7 @@ async def some_op5(a: int, b: int) -> int:
 
 
 @attrs.define(auto_attribs=True, frozen=True, slots=True)
-class ExampleWorkflow(WorkflowBase):
+class ExampleWorkflowOne(WorkflowBase):
     pass
 
 
@@ -54,7 +54,7 @@ async def sensor_example() -> bool:
     return next(true_false_iterator)
 
 
-example_workflow = ExampleWorkflow(
+example_workflow = ExampleWorkflowOne(
     ops=(
         Edge(some_op1, ins=("a", "b"), outs=("c",)),
         Edge(some_op2, ins=(), outs=("a", "not_used")),
