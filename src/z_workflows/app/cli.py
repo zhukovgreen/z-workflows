@@ -95,50 +95,15 @@ async def main(ctx: Context) -> None:
     ctx.obj[_APP_KEY] = app
 
 
-@main.command(help="Run given workflow(s)")
-@click.option(
-    "--workflow-name",
-    required=False,
-    multiple=True,
-    default=(),
-    help=(
-        "provide the name of the workflow. "
-        "Use multiple times for more than one workflow to run. "
-        "Without this option all workflows will be run."
-    ),
-)
-@click.option(
-    "--on-schedule",
-    required=False,
-    multiple=True,
-    default=(),
-    help=(
-        "provide the schedule of running the given workflow. "
-        "Crontab syntax to use."
-    ),
-)
+@main.group(help="Run given workflow(s)", chain=True)
 @click.pass_context
 @coro
 async def run(
     ctx: Context,
-    workflow_name: Tuple[str, ...],
-    on_schedule: Tuple[str, ...],
 ) -> None:
-    if on_schedule and len(on_schedule) != 1:
-        assert len(on_schedule) == len(workflow_name), (
-            "Number of schedules should either be equal to the number of workflows "
-            "or 1. In case of equal numbers each workflow will be run on a corresponding "
-            "schedule. In case of only 1 schedule - all workflows will use it."
-        )
     app = get_app(ctx)
     try:
-        await app.start(
-            workflows=(
-                workflow_name
-                or tuple(w.__class__.__name__ for w in app.available_workflows)
-            ),
-            schedules=on_schedule,
-        )
+        await app.start()
     finally:
         await app.shutdown()
 
@@ -166,13 +131,24 @@ async def completions() -> None:
 @completions.command(help="zsh completions script")
 @coro
 async def zsh() -> None:
-    click.echo("_Z_WORKFLOWS_COMPLETE=zsh_source z-workflows")
+
+    proc = await asyncio.subprocess.create_subprocess_shell(
+        "_Z_WORKFLOWS_COMPLETE=zsh_source z-workflows",
+        stdout=asyncio.subprocess.PIPE,
+    )
+    res, _ = await proc.communicate()
+    click.echo(res.decode())
 
 
 @completions.command(help="bash completions script")
 @coro
 async def bash() -> None:
-    click.echo("_Z_WORKFLOWS_COMPLETE=bash_source z-workflows")
+    proc = await asyncio.subprocess.create_subprocess_shell(
+        "_Z_WORKFLOWS_COMPLETE=bash_source z-workflows",
+        stdout=asyncio.subprocess.PIPE,
+    )
+    res, _ = await proc.communicate()
+    click.echo(res.decode())
 
 
 @attrs.define(auto_attribs=True, slots=True)

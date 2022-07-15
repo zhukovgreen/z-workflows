@@ -98,6 +98,13 @@ _Solution = Tuple[Set[Edge], ...]
 
 
 def resolve(graph: _Graph) -> None:
+    """Check if graph is traversable.
+
+    If edge.ins are in known nodes, or edge do not need ins, then
+    the edge is considered known and its edge.outs, becomes known
+    as well.
+    """
+
     def inner(
         known_nodes: Tuple[str, ...],
         edges_to_resolve: _Graph,
